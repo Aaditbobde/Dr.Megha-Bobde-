@@ -1,0 +1,142 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model ClinicSetting {
+  id                 String   @id @default("clinic-settings")
+  clinicNameEn       String   @default("Dr. Megha Bobde's Homoeo Clinic")
+  clinicNameHi       String   @default("डॉ. मेघा बोबडे 'स होम्यो क्लिनिक")
+  doctorName         String   @default("Dr. Megha Abhijit Bobde")
+  qualifications     String   @default("MD (Mumbai), BHMS")
+  experience         String   @default("Over 15 Years of Clinical Experience")
+  patientsTreated    String   @default("2,000+ Patients Supported")
+  rating             Float    @default(5.0)
+  reviewCount        Int      @default(62)
+  address            String   @default("Shop No. B1, ABC Convenience Centre, beside Marigold Banquets, Bavdhan, Pune, Maharashtra 411021")
+  plusCode           String   @default("GQ46+FM Pune, Maharashtra")
+  phone              String   @default("+91 92701 13112")
+  phoneRaw           String   @default("+919270113112")
+  whatsapp           String   @default("+919270113112")
+  email              String   @default("drmeghahomoeoclinic@gmail.com")
+  instagram          String   @default("https://www.instagram.com/dr.megha_bobde/")
+  yfeUrl             String   @default("https://www.yoganandafloweressences.com/products/dr-megha")
+  isWomenOwned       Boolean  @default(true)
+  noticeBanner       String?  @default("")
+  noticeActive       Boolean  @default(false)
+  aboutBio           String   @default("")
+  philosophy         String   @default("")
+  updatedAt          DateTime @updatedAt
+}
+
+model BusinessHour {
+  id                  Int      @id @default(autoincrement())
+  dayOfWeek           Int      @unique // 0: Sunday, 1: Monday, ... 6: Saturday
+  dayName             String
+  morningOpenTime     String   @default("10:30") // 24h HH:MM
+  morningCloseTime    String   @default("13:30")
+  hasEveningSession   Boolean  @default(true)
+  eveningOpenTime     String   @default("18:00")
+  eveningCloseTime    String   @default("20:30")
+  isClosed            Boolean  @default(false)
+  slotDurationMinutes Int      @default(20)
+}
+
+model Service {
+  id           String   @id @default(cuid())
+  title        String
+  slug         String   @unique
+  category     String   @default("General")
+  summary      String
+  description  String
+  icon         String   @default("Activity")
+  symptoms     String
+  approach     String
+  isFeatured   Boolean  @default(true)
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Appointment {
+  id               String   @id @default(cuid())
+  patientName      String
+  phone            String
+  email            String?
+  age              Int?
+  gender           String?
+  appointmentDate  String   // "YYYY-MM-DD"
+  timeSlot         String   // "HH:MM"
+  consultationType String   @default("IN_CLINIC") // "IN_CLINIC" | "ONLINE"
+  treatmentType    String   @default("HOMOEOPATHY") // "HOMOEOPATHY" | "YFE_THERAPY" | "MIND_POWER_YOGA"
+  reason           String
+  status           String   @default("CONFIRMED") // "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED"
+  notes            String?  @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([appointmentDate, timeSlot, status])
+}
+
+model Testimonial {
+  id           String   @id @default(cuid())
+  patientName  String
+  condition    String
+  rating       Float    @default(5.0)
+  reviewText   String
+  dateString   String
+  isApproved   Boolean  @default(true)
+  isFeatured   Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  excerpt     String
+  content     String
+  category    String   @default("Homoeopathy Care")
+  author      String   @default("Dr. Megha Abhijit Bobde, MD, BHMS")
+  readTime    String   @default("4 min read")
+  coverImage  String?
+  isPublished Boolean  @default(true)
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContactInquiry {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model GalleryImage {
+  id         String   @id @default(cuid())
+  title      String
+  category   String   // "Clinic Exterior", "Reception & Waiting Area", "Consultation Room", "Doctor at Work", "Certificates & Natural Remedies"
+  imageUrl   String
+  altText    String
+  order      Int      @default(0)
+  isFeatured Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String   @default("Dr. Megha Abhijit Bobde")
+  role         String   @default("ADMIN")
+  createdAt    DateTime @default(now())
+}

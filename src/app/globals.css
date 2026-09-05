@@ -1,0 +1,212 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Inter:wght@300;400;500;600;700&family=Noto+Serif+Devanagari:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 33% 98%;
+    --foreground: 22 25% 15%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: clip;
+    max-width: 100%;
+  }
+
+  body {
+    color: #1A1512;
+    background-color: #FDFBF7;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 1.125rem; /* 18px baseline body text */
+    line-height: 1.72;   /* Generous 1.6–1.75 line height for effortless readability */
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+    max-width: 100%;
+  }
+
+  /* Headings: Fraunces serif, generous 1.3–1.4 line height */
+  h1, h2, h3, h4, h5, h6, .font-serif {
+    font-family: 'Fraunces', 'Playfair Display', 'Lora', Georgia, serif;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+    color: #120E0C;
+  }
+
+  /* Paragraphs: relaxed spacing and comfortable reading width (65-75 chars) */
+  p {
+    max-width: 72ch;
+    line-height: 1.72;
+    margin-bottom: 1.25rem; /* mb-5 generous paragraph spacing */
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Center-aligned paragraphs maintain centering while capped at reading width */
+  .text-center p,
+  p.text-center,
+  .mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Devanagari typography */
+  .font-devanagari {
+    font-family: 'Noto Serif Devanagari', 'Fraunces', serif;
+    line-height: 1.6;
+  }
+
+  /* Form controls & labels: high legibility and minimum 16px */
+  label {
+    font-size: 1rem; /* 16px */
+    font-weight: 600;
+    line-height: 1.5;
+    color: #241E19;
+    margin-bottom: 0.35rem;
+    display: inline-block;
+  }
+
+  input, select, textarea {
+    font-size: 1rem !important; /* 16px to prevent iOS auto-zoom and guarantee readability */
+    line-height: 1.5;
+    color: #1A1512;
+  }
+
+  button, .pill-btn {
+    font-size: 1rem; /* 16px minimum for comfortable tap and readability */
+    line-height: 1.5;
+    letter-spacing: 0.005em;
+  }
+
+  /* Prose & Long-form reading containers */
+  .prose p {
+    margin-top: 1rem;
+    margin-bottom: 1.35rem;
+    line-height: 1.75;
+    max-width: 70ch;
+  }
+}
+
+/* ==========================================================================
+   WCAG AA Contrast & Minimum Font-Size Enforcements (Global)
+   ========================================================================== */
+
+/* Ensure no text anywhere drops below 14px (secondary/caption/hours/tags) */
+[class*="text-[10px]"],
+[class*="text-[11px]"],
+[class*="text-[12px]"],
+[class*="text-[13px]"] {
+  font-size: 0.875rem !important; /* 14px minimum */
+  line-height: 1.55 !important;
+}
+
+/* Darken faint grey text to exceed WCAG AA (4.5:1 for body, 3:1 for large text) */
+.text-slate-400,
+.text-gray-400,
+.text-zinc-400 {
+  color: #5C5046 !important; /* 7.3:1 contrast on #FDFBF7 */
+}
+
+.text-slate-500,
+.text-gray-500,
+.text-zinc-500 {
+  color: #4A3F36 !important; /* 9.7:1 contrast on #FDFBF7 */
+}
+
+.text-slate-600,
+.text-gray-600,
+.text-zinc-600 {
+  color: #3D332B !important; /* 12.1:1 contrast on #FDFBF7 */
+}
+
+/* Mobile scaling guarantee: never shrink body text below 18px on small screens */
+@media (max-width: 640px) {
+  body, p {
+    font-size: 1.125rem; /* Stays at 18px baseline */
+    line-height: 1.7;
+  }
+  h1 {
+    line-height: 1.28;
+  }
+  h2 {
+    line-height: 1.32;
+  }
+  h3 {
+    line-height: 1.35;
+  }
+}
+
+/* ==========================================================================
+   Boutique Wellness Utilities
+   ========================================================================== */
+.boutique-card {
+  background-color: #FFFFFF;
+  border-radius: 1.5rem;
+  border: 1px solid #EFE9DE;
+  box-shadow: 0 4px 20px -4px rgba(43, 36, 32, 0.05);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.boutique-card:hover {
+  box-shadow: 0 10px 28px -6px rgba(196, 96, 28, 0.12);
+  transform: translateY(-2px);
+}
+
+.pill-btn {
+  border-radius: 9999px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease-out;
+}
+
+.pill-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -4px rgba(196, 96, 28, 0.28);
+}
+
+.pill-btn:active {
+  transform: translateY(0);
+}
+
+.warm-gradient {
+  background: linear-gradient(135deg, #FDF6F0 0%, #FAF7F2 50%, #F5EAE0 100%);
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, #D9691E 0%, #BA5715 60%, #9E4912 100%);
+}
+
+.healing-gradient {
+  background: linear-gradient(135deg, #D9691E 0%, #BA5715 50%, #9E4912 100%);
+}
+
+.soft-glow {
+  box-shadow: 0 12px 32px -8px rgba(196, 96, 28, 0.2);
+}
+
+/* Warm, gentle scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF7F2;
+}
+::-webkit-scrollbar-thumb {
+  background: #DDD8D3;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #BA5715;
+}
