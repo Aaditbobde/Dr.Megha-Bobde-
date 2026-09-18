@@ -1,7 +1,8 @@
-export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAdminToken } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
@@ -11,35 +12,31 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const [
-      totalAppointments,
-      pendingAppointments,
-      totalServices,
-      totalTestimonials,
-      pendingReviews,
-      totalBlogPosts,
-      unreadInquiries,
-    ] = await Promise.all([
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    const [todayAppointments, pendingReviews, unreadInquiries, totalAppointments] = await Promise.all([
+      prisma.appointment.findMany({
+        where: { appointmentDate: today },
+        orderBy: { timeSlot: 'asc' },
+      }),
+      prisma.testimonial.count({
+        where: { isApproved: false },
+      }),
+      prisma.contactInquiry.count({
+        where: { isRead: false },
+      }),
       prisma.appointment.count(),
-      prisma.appointment.count({ where: { status: 'PENDING' } }),
-      prisma.service.count(),
-      prisma.testimonial.count(),
-      prisma.testimonial.count({ where: { isApproved: false } }),
-      prisma.blogPost.count(),
-      prisma.contactInquiry.count({ where: { isRead: false } }),
     ]);
 
     return NextResponse.json({
-      totalAppointments,
-      pendingAppointments,
-      totalServices,
-      totalTestimonials,
+      todayAppointments,
+      todayAppointmentCount: todayAppointments.length,
       pendingReviews,
-      totalBlogPosts,
       unreadInquiries,
+      totalAppointments,
     });
   } catch (error) {
-    console.error('Error fetching stats:', error);
-    return NextResponse.json({ error: 'Failed to fetch admin stats' }, { status: 500 });
+    console.error('Error fetching admin stats:', error);
+    return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
   }
 }

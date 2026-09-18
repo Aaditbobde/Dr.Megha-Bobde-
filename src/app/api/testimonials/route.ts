@@ -54,15 +54,20 @@ export async function POST(req: Request) {
       );
     }
 
+    // Check if admin is creating on behalf of patient
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    const isAdmin = token ? !!verifyAdminToken(token) : false;
+
     const testimonial = await prisma.testimonial.create({
       data: {
         patientName: patientName.trim(),
         condition: condition.trim(),
         rating: Number(rating) || 5.0,
         reviewText: reviewText.trim(),
-        dateString: 'Just now',
-        isApproved: false, // Requires admin moderation
-        isFeatured: false,
+        dateString: body.dateString || new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long' }),
+        isApproved: isAdmin ? true : false, // Admin-created reviews are auto-approved
+        isFeatured: isAdmin ? true : false,
       },
     });
 

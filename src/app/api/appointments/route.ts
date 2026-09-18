@@ -33,16 +33,40 @@ export async function GET(req: Request) {
       const allSlots = generateTimeSlots(hourConfig as unknown as BusinessHourData);
 
       // Fetch existing non-cancelled bookings for this date
-      const existingBookings = await prisma.appointment.findMany({
-        where: {
-          appointmentDate: date,
-          status: { in: ['PENDING', 'CONFIRMED'] },
-        },
-        select: { timeSlot: true },
-      });
+      const [existingBookings, blockedSlots] = await Promise.all([
+        prisma.appointment.findMany({
+          where: {
+            appointmentDate: date,
+            status: { in: ['PENDING', 'CONFIRMED'] },
+          },
+          select: { timeSlot: true },
+        }),
+        prisma.blockedSlot.findMany({
+          where: { date },
+        }),
+      ]);
 
       const bookedSlots = existingBookings.map((b) => b.timeSlot);
-      const availableSlots = allSlots.filter((slot) => !bookedSlots.includes(slot));
+
+      // Check for full-day block (timeSlot is null)
+      const isFullDayBlocked = blockedSlots.some((bs) => !bs.timeSlot);
+      if (isFullDayBlocked) {
+        const reason = blockedSlots.find((bs) => !bs.timeSlot)?.reason || 'Doctor unavailable';
+        return NextResponse.json({
+          isClosed: true,
+          dayName: hourConfig.dayName,
+          availableSlots: [],
+          allSlots,
+          bookedSlots,
+          blockedReason: reason,
+        });
+      }
+
+      // Filter out individually blocked time slots
+      const blockedTimes = blockedSlots.map((bs) => bs.timeSlot).filter(Boolean);
+      const availableSlots = allSlots.filter(
+        (slot) => !bookedSlots.includes(slot) && !blockedTimes.includes(slot)
+      );
 
       return NextResponse.json({
         isClosed: false,
@@ -118,6 +142,25 @@ export async function POST(req: Request) {
     if (!validSlots.includes(timeSlot)) {
       return NextResponse.json(
         { error: `Requested time slot ${timeSlot} is outside official clinic consultation hours.` },
+        { status: 400 }
+      );
+    }
+
+    // Check if the slot is blocked by the doctor
+    const blockedSlot = await prisma.blockedSlot.findFirst({
+      where: {
+        date: appointmentDate,
+        OR: [
+          { timeSlot: null },  // full-day block
+          { timeSlot },        // specific slot block
+        ],
+      },
+    });
+
+    if (blockedSlot) {
+      const reason = blockedSlot.reason || 'Doctor unavailable';
+      return NextResponse.json(
+        { error: `This slot is blocked: ${reason}. Please select another time.` },
         { status: 400 }
       );
     }

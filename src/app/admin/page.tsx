@@ -2,20 +2,26 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Calendar, 
-  Clock, 
-  Settings, 
-  FileText, 
-  MessageSquare, 
-  Star, 
-  LogOut, 
-  CheckCircle2, 
-  ShieldCheck, 
+import {
+  Calendar,
+  Clock,
+  Settings,
+  FileText,
+  MessageSquare,
+  Star,
+  LogOut,
+  CheckCircle2,
+  ShieldCheck,
   Camera,
-  ExternalLink 
+  ExternalLink,
+  LayoutDashboard,
+  User,
+  Layout,
+  Menu,
+  X,
 } from 'lucide-react';
 
+import DashboardHome from './components/DashboardHome';
 import AppointmentsTab from './components/AppointmentsTab';
 import HoursTab from './components/HoursTab';
 import SettingsTab from './components/SettingsTab';
@@ -24,13 +30,32 @@ import ServicesTab from './components/ServicesTab';
 import BlogTab from './components/BlogTab';
 import InquiriesTab from './components/InquiriesTab';
 import GalleryTab from './components/GalleryTab';
+import AboutMeTab from './components/AboutMeTab';
+import HomepageTab from './components/HomepageTab';
 import Logo from '@/components/Logo';
+
+type TabId = 'dashboard' | 'appointments' | 'hours' | 'gallery' | 'settings' | 'services' | 'reviews' | 'blog' | 'inquiries' | 'about' | 'homepage';
+
+const TABS: { id: TabId; label: string; icon: any; group: string }[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, group: 'Overview' },
+  { id: 'appointments', label: 'Appointments', icon: Calendar, group: 'Operations' },
+  { id: 'hours', label: 'Clinic Hours', icon: Clock, group: 'Operations' },
+  { id: 'inquiries', label: 'Inquiries', icon: MessageSquare, group: 'Operations' },
+  { id: 'homepage', label: 'Homepage', icon: Layout, group: 'Content' },
+  { id: 'about', label: 'About Me', icon: User, group: 'Content' },
+  { id: 'services', label: 'Services', icon: ShieldCheck, group: 'Content' },
+  { id: 'blog', label: 'Blog', icon: FileText, group: 'Content' },
+  { id: 'gallery', label: 'Gallery', icon: Camera, group: 'Content' },
+  { id: 'reviews', label: 'Reviews', icon: Star, group: 'Content' },
+  { id: 'settings', label: 'Settings', icon: Settings, group: 'System' },
+];
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'appointments' | 'hours' | 'gallery' | 'settings' | 'services' | 'reviews' | 'blog' | 'inquiries'>('appointments');
+  const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [appointments, setAppointments] = useState<any[]>([]);
   const [hours, setHours] = useState<any[]>([]);
@@ -56,16 +81,9 @@ export default function AdminDashboardPage() {
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${authToken}` };
-
       const [
-        apptsRes,
-        hoursRes,
-        settingsRes,
-        servicesRes,
-        reviewsRes,
-        blogRes,
-        inquiriesRes,
-        galleryRes,
+        apptsRes, hoursRes, settingsRes, servicesRes,
+        reviewsRes, blogRes, inquiriesRes, galleryRes,
       ] = await Promise.all([
         fetch('/api/appointments', { headers }),
         fetch('/api/hours', { headers }),
@@ -78,10 +96,7 @@ export default function AdminDashboardPage() {
       ]);
 
       if (apptsRes.ok) setAppointments(await apptsRes.json());
-      if (hoursRes.ok) {
-        const hData = await hoursRes.json();
-        setHours(hData.hours || []);
-      }
+      if (hoursRes.ok) { const hData = await hoursRes.json(); setHours(hData.hours || []); }
       if (settingsRes.ok) setClinicSettings(await settingsRes.json());
       if (servicesRes.ok) setServices(await servicesRes.json());
       if (reviewsRes.ok) setReviews(await reviewsRes.json());
@@ -106,26 +121,24 @@ export default function AdminDashboardPage() {
     setTimeout(() => setStatusMessage(null), 4000);
   };
 
+  const navigateTab = (tab: string) => {
+    setActiveTab(tab as TabId);
+    setSidebarOpen(false);
+  };
+
   const updateAppointmentStatus = async (id: string, newStatus: string) => {
     if (!token) return;
     try {
       const res = await fetch(`/api/appointments/${id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
-        setAppointments((prev) =>
-          prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
-        );
+        setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a)));
         showNotification(`Appointment marked as ${newStatus}`);
       }
-    } catch {
-      alert('Failed to update status');
-    }
+    } catch { alert('Failed to update status'); }
   };
 
   const deleteAppointment = async (id: string) => {
@@ -139,9 +152,7 @@ export default function AdminDashboardPage() {
         setAppointments((prev) => prev.filter((a) => a.id !== id));
         showNotification('Appointment deleted');
       }
-    } catch {
-      alert('Failed to delete appointment');
-    }
+    } catch { alert('Failed to delete appointment'); }
   };
 
   const saveHours = async () => {
@@ -149,18 +160,11 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch('/api/hours', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ hours }),
       });
-      if (res.ok) {
-        showNotification('Clinic hours and live open/closed status updated!');
-      }
-    } catch {
-      alert('Failed to save hours');
-    }
+      if (res.ok) showNotification('Clinic hours updated!');
+    } catch { alert('Failed to save hours'); }
   };
 
   const saveSettings = async (e: React.FormEvent) => {
@@ -169,18 +173,11 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(clinicSettings),
       });
-      if (res.ok) {
-        showNotification('Clinic details and credentials saved!');
-      }
-    } catch {
-      alert('Failed to save settings');
-    }
+      if (res.ok) showNotification('Settings saved!');
+    } catch { alert('Failed to save settings'); }
   };
 
   const toggleReviewApproval = async (id: string, isApproved: boolean) => {
@@ -188,21 +185,14 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch(`/api/testimonials/${id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ isApproved }),
       });
       if (res.ok) {
-        setReviews((prev) =>
-          prev.map((r) => (r.id === id ? { ...r, isApproved } : r))
-        );
+        setReviews((prev) => prev.map((r) => (r.id === id ? { ...r, isApproved } : r)));
         showNotification(`Review ${isApproved ? 'Approved' : 'Unapproved'}`);
       }
-    } catch {
-      alert('Failed to update review');
-    }
+    } catch { alert('Failed to update review'); }
   };
 
   const deleteReview = async (id: string) => {
@@ -216,9 +206,7 @@ export default function AdminDashboardPage() {
         setReviews((prev) => prev.filter((r) => r.id !== id));
         showNotification('Review deleted');
       }
-    } catch {
-      alert('Failed to delete review');
-    }
+    } catch { alert('Failed to delete review'); }
   };
 
   if (loading) {
@@ -229,43 +217,45 @@ export default function AdminDashboardPage() {
     );
   }
 
+  const unreadInquiries = inquiries.filter((i: any) => !i.isRead).length;
+  const pendingReviews = reviews.filter((r: any) => !r.isApproved).length;
+  const groups = ['Overview', 'Operations', 'Content', 'System'];
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col text-espresso-950">
       {/* Header */}
-      <header className="bg-espresso-950 text-white px-6 py-4 border-b border-espresso-800 flex justify-between items-center sticky top-0 z-30 shadow-md">
+      <header className="bg-espresso-950 text-white px-4 sm:px-6 py-3 border-b border-espresso-800 flex justify-between items-center sticky top-0 z-40 shadow-md">
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="lg:hidden p-2 rounded-lg text-cream-300 hover:text-white hover:bg-espresso-800"
+          >
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
           <Logo variant="white" showSubtitle={false} />
           <div className="hidden sm:block border-l border-espresso-800 pl-3">
             <span className="text-[11px] font-semibold text-brand-300 block uppercase tracking-wider">
-              Doctor CMS & Operations Portal
+              Doctor CMS Portal
             </span>
             <span className="text-[10px] text-espresso-400">
-              Dr. Megha Abhijit Bobde · MD (Mumbai), BHMS
+              Dr. Megha Abhijit Bobde · MD, BHMS
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="pill-btn text-xs text-cream-100 hover:text-white flex items-center gap-1.5 bg-espresso-900 hover:bg-espresso-800 px-3.5 py-1.5 rounded-full border border-espresso-700 transition-colors"
-          >
-            <span>Public Site</span>
-            <ExternalLink className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-2">
+          <a href="/" target="_blank" rel="noopener noreferrer"
+            className="hidden sm:flex pill-btn text-xs text-cream-100 hover:text-white items-center gap-1.5 bg-espresso-900 hover:bg-espresso-800 px-3.5 py-1.5 rounded-full border border-espresso-700 transition-colors">
+            <span>View Site</span><ExternalLink className="w-3.5 h-3.5" />
           </a>
-
-          <button
-            onClick={handleLogout}
-            className="pill-btn text-xs text-rose-300 hover:text-rose-100 flex items-center gap-1.5 bg-rose-950/40 hover:bg-rose-950/60 px-3.5 py-1.5 rounded-full border border-rose-900/40 transition-colors"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Logout</span>
+          <button onClick={handleLogout}
+            className="pill-btn text-xs text-rose-300 hover:text-rose-100 flex items-center gap-1.5 bg-rose-950/40 hover:bg-rose-950/60 px-3.5 py-1.5 rounded-full border border-rose-900/40 transition-colors">
+            <LogOut className="w-3.5 h-3.5" /><span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </header>
 
+      {/* Toast Notification */}
       {statusMessage && (
         <div className="fixed top-16 right-6 z-50 bg-sage-800 text-white text-xs px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-4 h-4 text-sage-300" />
@@ -273,131 +263,149 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex-1">
-        
-        {/* Metric Cards Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4 mb-8">
-          <div className="boutique-card p-4 bg-white">
-            <span className="text-[10px] font-bold text-espresso-500 uppercase block tracking-wider">Appointments</span>
-            <span className="text-2xl font-serif font-bold text-espresso-950 mt-1 block">{appointments.length}</span>
+      {/* Layout: Sidebar + Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 bg-espresso-950/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
+
+        {/* Sidebar */}
+        <aside className={`${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0 fixed lg:static inset-y-0 left-0 top-[57px] z-30 w-56 bg-white border-r border-warm-200 flex flex-col transition-transform duration-200 ease-out overflow-y-auto`}>
+          <nav className="flex-1 p-3 space-y-1">
+            {groups.map((group) => {
+              const groupTabs = TABS.filter((t) => t.group === group);
+              return (
+                <div key={group} className="py-2">
+                  <span className="text-[10px] font-bold text-espresso-400 uppercase tracking-wider px-3 block mb-1.5">
+                    {group}
+                  </span>
+                  {groupTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    const badge =
+                      tab.id === 'inquiries' && unreadInquiries > 0 ? unreadInquiries
+                      : tab.id === 'reviews' && pendingReviews > 0 ? pendingReviews
+                      : null;
+
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => navigateTab(tab.id)}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                          isActive
+                            ? 'bg-brand-600 text-white shadow-sm'
+                            : 'text-espresso-700 hover:bg-warm-100 hover:text-espresso-900'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span className="flex-1 text-left">{tab.label}</span>
+                        {badge !== null && (
+                          <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                            isActive ? 'bg-white/25 text-white' : 'bg-brand-100 text-brand-800'
+                          }`}>
+                            {badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="max-w-6xl mx-auto">
+            {activeTab === 'dashboard' && (
+              <DashboardHome token={token} onNavigate={navigateTab} />
+            )}
+
+            {activeTab === 'appointments' && (
+              <AppointmentsTab
+                appointments={appointments}
+                token={token}
+                onUpdateStatus={updateAppointmentStatus}
+                onDelete={deleteAppointment}
+                showNotification={showNotification}
+              />
+            )}
+
+            {activeTab === 'hours' && (
+              <HoursTab hours={hours} setHours={setHours} onSave={saveHours} />
+            )}
+
+            {activeTab === 'gallery' && (
+              <GalleryTab token={token} onRefresh={() => loadAllData(token!)} />
+            )}
+
+            {activeTab === 'settings' && (
+              <SettingsTab
+                clinicSettings={clinicSettings}
+                setClinicSettings={setClinicSettings}
+                onSave={saveSettings}
+              />
+            )}
+
+            {activeTab === 'services' && (
+              <ServicesTab
+                services={services}
+                token={token}
+                onRefresh={() => loadAllData(token!)}
+                showNotification={showNotification}
+              />
+            )}
+
+            {activeTab === 'reviews' && (
+              <ReviewsTab
+                reviews={reviews}
+                token={token}
+                onToggleApproval={toggleReviewApproval}
+                onDelete={deleteReview}
+                showNotification={showNotification}
+              />
+            )}
+
+            {activeTab === 'blog' && (
+              <BlogTab
+                blogPosts={blogPosts}
+                token={token}
+                onRefresh={() => loadAllData(token!)}
+                showNotification={showNotification}
+              />
+            )}
+
+            {activeTab === 'inquiries' && (
+              <InquiriesTab
+                inquiries={inquiries}
+                token={token}
+                showNotification={showNotification}
+              />
+            )}
+
+            {activeTab === 'about' && (
+              <AboutMeTab
+                clinicSettings={clinicSettings}
+                setClinicSettings={setClinicSettings}
+                onSave={saveSettings}
+                token={token}
+              />
+            )}
+
+            {activeTab === 'homepage' && (
+              <HomepageTab
+                clinicSettings={clinicSettings}
+                setClinicSettings={setClinicSettings}
+                onSave={saveSettings}
+                token={token}
+              />
+            )}
           </div>
-
-          <div className="boutique-card p-4 bg-white">
-            <span className="text-[10px] font-bold text-espresso-500 uppercase block tracking-wider">Google Rating</span>
-            <span className="text-2xl font-serif font-bold text-amber-500 mt-1 block">5.0 ★</span>
-            <span className="text-[10px] text-espresso-400">62 Reviews</span>
-          </div>
-
-          <div className="boutique-card p-4 bg-white">
-            <span className="text-[10px] font-bold text-espresso-500 uppercase block tracking-wider">Modalities</span>
-            <span className="text-2xl font-serif font-bold text-brand-700 mt-1 block">{services.length}</span>
-          </div>
-
-          <div className="boutique-card p-4 bg-white">
-            <span className="text-[10px] font-bold text-espresso-500 uppercase block tracking-wider">Gallery Photos</span>
-            <span className="text-2xl font-serif font-bold text-espresso-950 mt-1 block">{galleryImages.length}</span>
-          </div>
-
-          <div className="boutique-card p-4 bg-white">
-            <span className="text-[10px] font-bold text-espresso-500 uppercase block tracking-wider">Reviews</span>
-            <span className="text-2xl font-serif font-bold text-espresso-950 mt-1 block">{reviews.length}</span>
-          </div>
-
-          <div className="boutique-card p-4 bg-white">
-            <span className="text-[10px] font-bold text-espresso-500 uppercase block tracking-wider">Blog Posts</span>
-            <span className="text-2xl font-serif font-bold text-espresso-950 mt-1 block">{blogPosts.length}</span>
-          </div>
-
-          <div className="boutique-card p-4 bg-white">
-            <span className="text-[10px] font-bold text-espresso-500 uppercase block tracking-wider">Inquiries</span>
-            <span className="text-2xl font-serif font-bold text-espresso-950 mt-1 block">{inquiries.length}</span>
-          </div>
-        </div>
-
-        {/* Tab Buttons */}
-        <div className="flex overflow-x-auto gap-2 border-b border-tan-200 pb-3 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
-          {[
-            { id: 'appointments', label: 'Appointments', icon: Calendar },
-            { id: 'hours', label: 'Split Hours & Live Status', icon: Clock },
-            { id: 'gallery', label: 'Clinic Gallery CMS', icon: Camera },
-            { id: 'settings', label: 'Clinic Details & Credentials', icon: Settings },
-            { id: 'services', label: 'Treatments & Modalities', icon: ShieldCheck },
-            { id: 'reviews', label: 'Patient Reviews (62)', icon: Star },
-            { id: 'blog', label: 'Health Blog', icon: FileText },
-            { id: 'inquiries', label: 'Inquiries', icon: MessageSquare },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`shrink-0 min-h-[44px] flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-                  isActive
-                    ? 'pill-btn bg-brand-600 text-white shadow-md shadow-brand-500/20'
-                    : 'bg-white text-espresso-700 hover:bg-tan-50 border border-tan-200 active:bg-tan-100'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Active Tab Panels */}
-        {activeTab === 'appointments' && (
-          <AppointmentsTab
-            appointments={appointments}
-            onUpdateStatus={updateAppointmentStatus}
-            onDelete={deleteAppointment}
-          />
-        )}
-
-        {activeTab === 'hours' && (
-          <HoursTab
-            hours={hours}
-            setHours={setHours}
-            onSave={saveHours}
-          />
-        )}
-
-        {activeTab === 'gallery' && (
-          <GalleryTab
-            token={token}
-            onRefresh={() => loadAllData(token!)}
-          />
-        )}
-
-        {activeTab === 'settings' && (
-          <SettingsTab
-            clinicSettings={clinicSettings}
-            setClinicSettings={setClinicSettings}
-            onSave={saveSettings}
-          />
-        )}
-
-        {activeTab === 'services' && (
-          <ServicesTab services={services} />
-        )}
-
-        {activeTab === 'reviews' && (
-          <ReviewsTab
-            reviews={reviews}
-            onToggleApproval={toggleReviewApproval}
-            onDelete={deleteReview}
-          />
-        )}
-
-        {activeTab === 'blog' && (
-          <BlogTab blogPosts={blogPosts} />
-        )}
-
-        {activeTab === 'inquiries' && (
-          <InquiriesTab inquiries={inquiries} />
-        )}
-
+        </main>
       </div>
     </div>
   );

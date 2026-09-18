@@ -30,6 +30,13 @@ model ClinicSetting {
   noticeActive       Boolean  @default(false)
   aboutBio           String   @default("")
   philosophy         String   @default("")
+  tagline            String   @default("Root-Cause Holistic Healing")
+  heroHeadline       String   @default("Dr. Megha Bobde's")
+  heroSubheadline    String   @default("Homoeo Clinic")
+  heroImageUrl       String?
+  doctorPhotoUrl     String?
+  yfeDescription     String   @default("")
+  googleMapsEmbed    String   @default("")
   updatedAt          DateTime @updatedAt
 }
 
@@ -60,6 +67,25 @@ model Service {
   order        Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model ModalityCard {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String   @default("ShieldCheck")
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BlockedSlot {
+  id        String   @id @default(cuid())
+  date      String   // "YYYY-MM-DD"
+  timeSlot  String?  // null = block entire day
+  reason    String?
+  createdAt DateTime @default(now())
 }
 
 model Appointment {
@@ -117,8 +143,9 @@ model ContactInquiry {
   email     String?
   subject   String?
   message   String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
+  isRead      Boolean  @default(false)
+  isResponded Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
 
 model GalleryImage {

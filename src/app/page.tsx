@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { 
@@ -79,7 +79,7 @@ export default async function HomePage() {
                   <div className="flex items-center text-amber-500">
                     <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                   </div>
-                  <span>{rating.toFixed(1)} ★ Rated ({reviewCount} Google Reviews)</span>
+                  <span>{rating.toFixed(1)} ★ ({reviewCount} Google Reviews)</span>
                 </div>
 
                 {/* Women Owned Badge */}
@@ -91,21 +91,21 @@ export default async function HomePage() {
                 {/* Experience Pill */}
                 <span className="text-xs text-brand-800 font-semibold bg-white border border-warm-200 px-3 py-1 rounded-full inline-flex items-center gap-1.5 shadow-warm-sm">
                   <Award className="w-3.5 h-3.5 text-brand-600" />
-                  15+ Years · 2,000+ Patients
+                  {settings?.experience || '15+ Years'} · {settings?.patientsTreated || '2,000+ Patients'}
                 </span>
               </div>
 
               {/* Title & Subtitles */}
               <div className="space-y-2">
                 <p className="text-xs sm:text-sm font-semibold tracking-widest text-brand-700 uppercase">
-                  Root-Cause Holistic Healing
+                  {settings?.tagline || 'Root-Cause Holistic Healing'}
                 </p>
                 <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-espresso-900 tracking-tight leading-[1.15]">
-                  Dr. Megha Bobde's
-                  <span className="block text-brand-600 mt-1">Homoeo Clinic</span>
+                  {settings?.heroHeadline || "Dr. Megha Bobde's"}
+                  <span className="block text-brand-600 mt-1">{settings?.heroSubheadline || 'Homoeo Clinic'}</span>
                 </h1>
                 <p className="font-devanagari text-base sm:text-xl text-brand-800 font-medium tracking-wide pt-1">
-                  डॉ. मेघा बोबडे 'स होम्यो क्लिनिक · Bavdhan, Pune
+                  {settings?.clinicNameHi || "डॉ. मेघा बोबडे 'स होम्यो क्लिनिक"} · Bavdhan, Pune
                 </p>
               </div>
 
