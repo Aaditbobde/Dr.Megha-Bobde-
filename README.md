@@ -4,7 +4,7 @@ A full dynamic, multi-page web application and Content Management System (CMS) f
 
 ---
 
-## Real Clinic Details (Verified)
+## Real Clinic Details Verified
 
 - **Clinic Name:** Dr. Megha Bobde's Homoeo Clinic (डॉ. मेघा बोबडे 'स होम्यो क्लिनिक)
 - **Doctor:** Dr. Megha Abhijit Bobde — MD (Mumbai), BHMS (Bachelor of Homeopathic Medicine and Surgery)
